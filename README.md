@@ -1,3 +1,10 @@
+# HOW TO RUN
+
+- Clone the repository.
+- Run on localhost using **XAMPP**, **Live Server**, or any static file server.
+- Make sure the project is served from the root directory (e.g., `http://localhost/project-name/`).
+
+
 # TECHNOLOGIES
 
 - **HTML**
