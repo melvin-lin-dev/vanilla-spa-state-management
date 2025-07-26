@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>State Management/SPA</title>
+
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            tailwind.config = {
+                theme: {
+                    container: {
+                        center: true,
+                        padding: "1rem",
+                    },
+                    extend: {
+                        colors: {
+                            primary: {
+                                light: "rgb(43, 174, 104)",
+                                DEFAULT: "rgb(43, 174, 104)",
+                                dark: "rgb(43, 174, 104)",
+                            },
+                        },
+                    },
+                },
+            };
+        </script>
+
+        <script src="modules/routes.js"></script>
+        <script>
+            let activeModule;
+
+            window.addEventListener("DOMContentLoaded", () => {
+                handleRoute();
+
+                document.body.addEventListener("click", (e) => {
+                    if (e.target.dataset.route != undefined) {
+                        navigate(e.target.dataset.route);
+                    }
+                });
+
+                document.getElementById("footer-year").textContent = new Date().getFullYear();
+            });
+            window.addEventListener("hashchange", handleRoute);
+
+            function handleRoute() {
+                const path = location.hash.replace("#/", "") || "";
+                for (let i = 0; i < routes.length; i++) {
+                    let route = routes[i];
+                    if (route.path.match(path) || route.path == "**") {
+                        if (route.redirect) {
+                            navigate(route.redirect);
+                        } else {
+                            handleActiveLinks();
+                            handleLoadModule(route.component);
+                        }
+                        break;
+                    }
+                }
+            }
+
+            function handleLoadModule(component) {
+                fetch("./modules/" + component)
+                    .then((res) => res.text())
+                    .then((html) => {
+                        document.getElementById("app").innerHTML = html;
+
+                        scripts = document.getElementById("app").querySelectorAll("script");
+                        scripts.forEach((script) => {
+                            if (script.type == "module") {
+                                import(script.src)
+                                    .then((module) => {
+                                        activeModule = module;
+                                        module.init()?.();
+                                    })
+                                    .catch(console.error);
+                            } else {
+                                scriptEl = document.createElement("script");
+                                for (const attr of script.attributes) {
+                                    scriptEl.setAttribute(attr.name, attr.value);
+                                }
+                                scriptEl.textContent = script.textContent;
+                                document.getElementById("app").appendChild(scriptEl);
+                            }
+                        });
+                    })
+                    .catch(() => {
+                        alert("Component Not Found!");
+                    });
+            }
+
+            function navigate(route) {
+                activeModule?.destroy();
+
+                let path = location.hash || "/";
+                if (route.startsWith("/")) {
+                    path = route;
+                } else {
+                    path += "/" + route;
+                }
+
+                path = ("#" + path).replace(/\/{2,}/g, "");
+
+                location.hash = path;
+            }
+
+            function handleActiveLinks() {
+                path = location.hash.replace(/^#/, "");
+                let links = document.querySelectorAll("a[data-route]");
+                links.forEach((link) => {
+                    let data = link.dataset;
+                    link.className = data.class;
+                    if (data.match == "exact") {
+                        if (data.route == path) {
+                            link.className = data.matchClass;
+                        }
+                    } else if (data.match == "prefix") {
+                        if (path.startsWith(data.route)) {
+                            link.className = data.matchClass;
+                        }
+                    }
+                });
+            }
+        </script>
+
+        <link rel="stylesheet" href="index.css" />
+    </head>
+    <body>
+        <nav class="sticky top-0 bg-white py-6 border-b border-gray-400">
+            <div class="container">
+                <div class="flex items-center justify-between">
+                    <a data-route="/">
+                        <img src="assets/images/logo.png" alt="Logo" class="h-14" />
+                    </a>
+                    <div class="menu-container">
+                        <label for="menu" class="transform rotate-90 scale-x-[2] scale-y-[1.5] cursor-pointer inline-block md:hidden">|||</label>
+                        <input type="checkbox" id="menu" class="hidden" />
+                        <div>
+                            <div class="flex items-center justify-between p-4 md:p-0">
+                                <div class="text-base sm:text-xl md:text-2xl font-bold mb-2">State Management/SPA</div>
+                                <label for="menu" class="inline-block md:hidden cursor-pointer scale-[2] sm:scale-[2.5] md:scale-[3.2] transition text-red-400 hover:text-red-300 -mt-2 mr-2">&times;</label>
+                            </div>
+                            <nav>
+                                <ul class="flex items-center justify-end md:space-x-4 flex-col md:flex-row">
+                                    <li>
+                                        <a
+                                            data-group-id="nav-menu"
+                                            data-route="/posts"
+                                            data-match="exact"
+                                            data-match-class="block border-b-2 border-primary py-1.5 px-4 md:px-3 font-semibold text-primary"
+                                            data-class="cursor-pointer py-1.5 px-4 md:px-3 transition text-gray-500 hover:text-primary-light"
+                                            >Posts</a
+                                        >
+                                    </li>
+                                    <li>
+                                        <a
+                                            data-group-id="nav-menu"
+                                            data-route="/reports"
+                                            data-match="exact"
+                                            data-match-class="block border-b-2 border-primary py-1.5 px-4 md:px-3 font-semibold text-primary"
+                                            data-class="cursor-pointer py-1.5 px-4 md:px-3 transition text-gray-500 hover:text-primary-light"
+                                            >Reports</a
+                                        >
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <section id="app"></section>
+
+        <footer class="bg-primary-dark text-white">
+            <div class="py-4 text-center text-sm md:text-base">@ <span id="footer-year"></span> Melvin Lin. For experiment purposes only.</div>
+        </footer>
+    </body>
+</html>
