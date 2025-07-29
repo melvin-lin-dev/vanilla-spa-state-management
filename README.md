@@ -13,6 +13,7 @@
 
 
 # PURPOSES/EXPERIMENTS
+
 - [x] Implement state management from scratch
 - [x] Implement SPA (Single Page Application) from scratch
 
@@ -40,7 +41,7 @@
 
 # DOCUMENTATIONS
 
-## Folder Pattern
+## File Structure
 - /assets
     - /images
         - /logo.png
